@@ -1,0 +1,56 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    services:
+      docker:
+        image: docker:20.10.16
+        options: --privileged
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Unit Tests
+        run: pytest tests/unit_test.py --maxfail=1 --disable-warnings
+
+      - name: Lint Code
+        run: |
+          pip install flake8
+          flake8 src/ --max-line-length=120
+
+      - name: Run Integration Tests
+        run: pytest tests/integration_test.py --maxfail=1 --disable-warnings
+
+      - name: Build Docker Image
+        run: docker build -t mall_customer_service:latest .
+
+      - name: Run Container
+        run: |
+          docker run -d -p 5000:5000 --name test_container mall_customer_service:latest
+          sleep 5
+
+      - name: Run Smoke Test
+        run: pytest tests/smoke_test.py --maxfail=1 --disable-warnings
+
+      - name: Stop Container
+        run: |
+          docker stop test_container
+          docker rm test_container
