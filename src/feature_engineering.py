@@ -14,10 +14,8 @@ def encode_gender(gender):
         return gender.map({'Male': 0, 'Female': 1})
 
 
-
 def hash_customer_id(customer_id, num_buckets=10):
     if isinstance(customer_id, int):
         return int(hashlib.md5(str(customer_id).encode()).hexdigest(), 16) % num_buckets
     else:
         return customer_id.apply(lambda x: int(hashlib.md5(str(x).encode()).hexdigest(), 16) % num_buckets)
-
