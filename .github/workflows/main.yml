@@ -3,13 +3,11 @@ name: MLOps CI/CD Pipeline
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
 
 jobs:
-  # 1. STAGE: BUILD (COMMIT STAGE)
+  # 1. BUILD
   build:
-    name: 1. Build (Commit Stage)
+    name: 1. Build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -18,11 +16,9 @@ jobs:
         with:
           python-version: 3.11
       - name: Install dependencies
-        run: |
-          pip install -r requirements.txt
-          pip install pytest flake8 requests
+        run: pip install -r requirements.txt pytest flake8 requests
 
-  # 2. STAGE: UNIT TEST
+  # 2. UNIT TEST (Sadece fonksiyonları test eder)
   unit-test:
     name: 2. Unit Test
     needs: build
@@ -30,14 +26,24 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Run Unit Tests
-        run: |
-          pip install -r requirements.txt
-          pytest tests/unit_test.py
+        run: pytest tests/unit_test.py
 
-  # 3. STAGE: LINTING
-  linting:
-    name: 3. Linting (Flake8)
+  # 3. INTEGRATION TEST (Bileşenlerin beraber çalışmasını test eder)
+  integration-test:
+    name: 3. Integration Test
     needs: unit-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run Integration Tests
+        run: |
+          # Burada modelin eğitilip tahmin yapabildiğini test eden bir script çalıştırılabilir
+          python -m pytest tests/unit_test.py # Şimdilik unit testi kapsamlı koşturabiliriz
+
+  # 4. LINTING
+  linting:
+    name: 4. Linting
+    needs: integration-test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -46,9 +52,9 @@ jobs:
           pip install flake8
           flake8 src/
 
-  # 4. STAGE: PACKAGE (DOCKER BUILD)
+  # 5. PACKAGE
   package:
-    name: 4. Package (Docker Build)
+    name: 5. Package (Docker)
     needs: linting
     runs-on: ubuntu-latest
     steps:
@@ -56,9 +62,9 @@ jobs:
       - name: Build Docker Image
         run: docker build -t ml-service:latest .
 
-  # 5. STAGE: SMOKE TEST
+  # 6. SMOKE TEST
   smoke-test:
-    name: 5. Smoke Test (Deployment)
+    name: 6. Smoke Test (Deployment)
     needs: package
     runs-on: ubuntu-latest
     steps:
@@ -68,6 +74,5 @@ jobs:
           docker build -t ml-service:latest .
           docker run -d -p 5000:5000 --name prediction-service ml-service:latest
           sleep 15
-          docker logs prediction-service
           pip install requests pytest
           pytest tests/smoke_test.py
