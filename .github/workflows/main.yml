@@ -7,9 +7,9 @@ on:
     branches: [ main ]
 
 jobs:
-
-  unit-test:
-    name: 1. Unit Test Stage
+  # 1. STAGE: BUILD (COMMIT STAGE)
+  build:
+    name: 1. Build (Commit Stage)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -20,29 +20,35 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
-          pip install pytest
+          pip install pytest flake8 requests
+
+  # 2. STAGE: UNIT TEST
+  unit-test:
+    name: 2. Unit Test
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
       - name: Run Unit Tests
-        run: pytest tests/unit_test.py
+        run: |
+          pip install -r requirements.txt
+          pytest tests/unit_test.py
 
-
+  # 3. STAGE: LINTING
   linting:
-    name: 2. Linting Stage
+    name: 3. Linting (Flake8)
     needs: unit-test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.11
-      - name: Install dependencies
-        run: pip install flake8
       - name: Run Flake8
-        run: flake8 src/
+        run: |
+          pip install flake8
+          flake8 src/
 
-
+  # 4. STAGE: PACKAGE (DOCKER BUILD)
   package:
-    name: 3. Docker Package Stage
+    name: 4. Package (Docker Build)
     needs: linting
     runs-on: ubuntu-latest
     steps:
@@ -50,9 +56,9 @@ jobs:
       - name: Build Docker Image
         run: docker build -t ml-service:latest .
 
-
+  # 5. STAGE: SMOKE TEST
   smoke-test:
-    name: 4. Smoke Test Stage
+    name: 5. Smoke Test (Deployment)
     needs: package
     runs-on: ubuntu-latest
     steps:
