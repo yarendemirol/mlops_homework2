@@ -25,5 +25,3 @@ def predict_cluster(customer_id, age, income, score, gender):
     }])
 
     return int(_model.predict(features)[0])
-
-# (Buraya bir kez Enter'a basıp boş satır bırakmayı unutma)
