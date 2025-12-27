@@ -1,7 +1,6 @@
 from flask import Flask, request, jsonify
 from feature_engineering import encode_gender, hash_customer_id, load_data
 from model import train_model, predict_cluster
-import pandas as pd
 
 app = Flask(__name__)
 
@@ -18,8 +17,8 @@ def predict():
     customer_id = hash_customer_id(data["CustomerID"], num_buckets=10)
     gender = encode_gender(data["Gender"])
     age = data["Age"]
-    income = data["Annual Income"]
-    score = data["Spending Score"]
+    income = data["Annual_Income"]
+    score = data["Spending_Score"]
     prediction = predict_cluster(customer_id, gender, age, income, score)
     return jsonify({"cluster": prediction})
 

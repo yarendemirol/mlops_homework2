@@ -5,7 +5,7 @@ _model = None
 
 def train_model(df):
     global _model
-    features = df[['Age', 'Annual Income', 'Spending Score', 'Gender', 'CustomerID_hashed']]
+    features = df[['Age', 'Annual_Income', 'Spending_Score', 'Gender', 'CustomerID_hashed']]
     model = KMeans(n_clusters=3, random_state=42)
     model.fit(features)
     _model = model
@@ -16,10 +16,11 @@ def predict_cluster(customer_id, gender, age, income, score):
     if _model is None:
         return 0
     features = pd.DataFrame([{
-        'CustomerID_hashed': customer_id,
-        'Gender': gender,
         'Age': age,
-        'Annual Income': income,
-        'Spending Score': score
+        'Annual_Income': income,
+        'Spending_Score': score,
+        'Gender': gender,
+        'CustomerID_hashed': customer_id
     }])
+
     return int(_model.predict(features)[0])
