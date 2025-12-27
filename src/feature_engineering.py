@@ -19,3 +19,5 @@ def hash_customer_id(customer_id, num_buckets=10):
         return int(hashlib.md5(str(customer_id).encode()).hexdigest(), 16) % num_buckets
     else:
         return customer_id.apply(lambda x: int(hashlib.md5(str(x).encode()).hexdigest(), 16) % num_buckets)
+
+# (Buraya bir kez Enter'a basıp boş satır bırakmayı unutma)

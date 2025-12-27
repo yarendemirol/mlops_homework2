@@ -1,21 +1,29 @@
 import pandas as pd
-import hashlib
+from sklearn.cluster import KMeans
+
+_model = None
 
 
-def load_data(path):
-    df = pd.read_csv(path)
-    return df
+def train_model(df):
+    global _model
+    features = df[['Age', 'Annual_Income', 'Spending_Score', 'Gender', 'CustomerID_hashed']]
+    model = KMeans(n_clusters=3, random_state=42)
+    model.fit(features)
+    _model = model
+    return model
 
 
-def encode_gender(gender):
-    if isinstance(gender, str):
-        return 0 if gender == 'Male' else 1
-    else:
-        return gender.map({'Male': 0, 'Female': 1})
+def predict_cluster(customer_id, age, income, score, gender):
+    if _model is None:
+        return 0
+    features = pd.DataFrame([{
+        'Age': age,
+        'Annual_Income': income,
+        'Spending_Score': score,
+        'Gender': gender,
+        'CustomerID_hashed': customer_id
+    }])
 
+    return int(_model.predict(features)[0])
 
-def hash_customer_id(customer_id, num_buckets=10):
-    if isinstance(customer_id, int):
-        return int(hashlib.md5(str(customer_id).encode()).hexdigest(), 16) % num_buckets
-    else:
-        return customer_id.apply(lambda x: int(hashlib.md5(str(x).encode()).hexdigest(), 16) % num_buckets)
+# (Buraya bir kez Enter'a basıp boş satır bırakmayı unutma)
