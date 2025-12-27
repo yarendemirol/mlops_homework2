@@ -7,43 +7,57 @@ on:
     branches: [ main ]
 
 jobs:
-  commit-stage:
+  # PART 1: Commit Stage (CI)
+  unit-test:
+    name: 1. Unit Test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-
-      - name: Set up Python 3.11
+      - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: 3.11
-
       - name: Install dependencies
         run: pip install -r requirements.txt
-
-      - name: 1. Unit Tests
+      - name: Run Unit Tests
         run: pytest tests/unit_test.py
 
-      - name: 2. Linting (Flake8)
-        run: flake8 src/
-
-  deployment-stage:
-    needs: commit-stage
+  linting:
+    name: 2. Linting
+    needs: unit-test # Unit test geçerse çalışır
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+      - name: Install dependencies
+        run: pip install flake8
+      - name: Run Flake8
+        run: flake8 src/
 
-      - name: 3. Build & Package (Docker)
+  # PART 2: Automated Acceptance Gate (CD)
+  package:
+    name: 3. Package (Docker Build)
+    needs: linting # Linting geçerse çalışır
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build Docker Image
         run: docker build -t ml-service:latest .
 
-      - name: 4. Component Test
+  smoke-test:
+    name: 4. Smoke Test
+    needs: package # Paketleme tamamlanınca çalışır
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run Container and Test
         run: |
-          pip install -r requirements.txt
-          pytest tests/integration_test.py
-
-      - name: 5. Smoke Test (Deployment Verification)
-        run: |
+          docker build -t ml-service:latest .
           docker run -d -p 5000:5000 --name prediction-service ml-service:latest
           sleep 15
-          # Konteynır loglarını göster (Eğer hata varsa burada göreceğiz)
           docker logs prediction-service
+          pip install requests pytest
           pytest tests/smoke_test.py
