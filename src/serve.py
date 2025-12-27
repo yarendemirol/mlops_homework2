@@ -22,5 +22,11 @@ def predict():
     prediction = predict_cluster(customer_id, gender, age, income, score)
     return jsonify({"cluster": prediction})
 
+@app.route("/predict", methods=["POST"])
+def predict():
+
+    return jsonify({"cluster": prediction})
+
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
