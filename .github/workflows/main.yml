@@ -43,6 +43,7 @@ jobs:
       - name: 5. Smoke Test (Deployment Verification)
         run: |
           docker run -d -p 5000:5000 --name prediction-service ml-service:latest
-          # 5 saniye yerine biraz daha toleranslı davranalım
-          sleep 10 
+          sleep 15
+          # Konteynır loglarını göster (Eğer hata varsa burada göreceğiz)
+          docker logs prediction-service
           pytest tests/smoke_test.py

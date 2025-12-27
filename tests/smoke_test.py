@@ -1,5 +1,6 @@
 import requests
 import time
+import pytest  # Bu eksikti, ekledik
 
 
 def test_smoke():
@@ -12,16 +13,15 @@ def test_smoke():
         "Spending_Score": 50
     }
 
-    # Uygulamanın hazır olması için 5 kez, 5 saniye arayla deneme yapar
+    # 5 deneme x 10 saniye = 50 saniye boyunca deneyecek
     for i in range(5):
         try:
             response = requests.post(url, json=sample, timeout=5)
             if response.status_code == 200:
                 assert "cluster" in response.json()
-                return  # Başarılıysa testi bitir
+                return
         except requests.exceptions.ConnectionError:
-            print(f"Bağlantı denemesi {i + 1} başarısız, bekleniyor...")
-            time.sleep(5)
+            print(f"Deneme {i + 1}: Uygulama henüz hazır değil, bekleniyor...")
+            time.sleep(10)  # Bekleme süresini artırdık
 
-    # Eğer 5 deneme de başarısız olursa testi fail et
     pytest.fail("Uygulama zamanında ayağa kalkmadı.")
