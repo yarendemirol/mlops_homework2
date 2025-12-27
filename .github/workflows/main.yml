@@ -7,9 +7,9 @@ on:
     branches: [ main ]
 
 jobs:
-  # PART 1: Commit Stage (CI)
+
   unit-test:
-    name: 1. Unit Test
+    name: 1. Unit Test Stage
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -18,13 +18,16 @@ jobs:
         with:
           python-version: 3.11
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: |
+          pip install -r requirements.txt
+          pip install pytest
       - name: Run Unit Tests
         run: pytest tests/unit_test.py
 
+
   linting:
-    name: 2. Linting
-    needs: unit-test # Unit test geçerse çalışır
+    name: 2. Linting Stage
+    needs: unit-test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -37,19 +40,20 @@ jobs:
       - name: Run Flake8
         run: flake8 src/
 
-  # PART 2: Automated Acceptance Gate (CD)
+
   package:
-    name: 3. Package (Docker Build)
-    needs: linting # Linting geçerse çalışır
+    name: 3. Docker Package Stage
+    needs: linting
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - name: Build Docker Image
         run: docker build -t ml-service:latest .
 
+
   smoke-test:
-    name: 4. Smoke Test
-    needs: package # Paketleme tamamlanınca çalışır
+    name: 4. Smoke Test Stage
+    needs: package
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
